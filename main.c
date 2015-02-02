@@ -91,14 +91,14 @@ void usage(char opt, const char *self)
     fprintf(stderr,
             "Usage: %s [OPTION]... [FILE] [-m MSGFILE | -t MSGTEXT] [-o OUTFILE]\n"
             "       %s -x [OPTION]... [FILE] [-m MSGFILE]\n"
-            "Insert data into image, and output as PNG file.\n"
+            "Encode data into an image, and output as a PNG file.\n"
             "\n"
             "Available options are:\n"
             "    -o, --outfile OUTFILE    write output to OUTFILE.\n"
-            "    -m, --msgfile MSGFILE    read msg from MSGFILE.\n"
+            "    -m, --msgfile MSGFILE    read/write msg from MSGFILE.\n"
             "    -t, --msgtext MSGTEXT    specify msg in cli.\n"
             "    -x, --extract            extract msg to MSGFILE.\n"
-            "    -b, --bit N              insert N bit msg per byte.\n"
+            "    -b, --bit N              insert N bit msg per byte(subpixel), 0 < N < 8\n"
             "    -v, --verbose            verbose mode.\n"
             "    -q, --quiet              suppress error messages.\n"
             "    -s, --show-info          show some info about FILE, can be combined with -x.\n"
@@ -107,6 +107,14 @@ void usage(char opt, const char *self)
             "    -V, --version            show version.\n"
             "\n"
             "Default MSGFILE is \"-\" (stdin or stdout).\n"
+            "\n"
+            "Examples:\n"
+            "    hii g.png -m msg.txt -o g.out.png\n"
+            "    hii -x g.out.png\n"
+            "    hii -sx g.out.png\n"
+            "\n"
+            "    hii g.png -t abcdefg -o g.out.png\n"
+            "    hii -x g.png\n"
             "\n",
             self, self);
     fprintf(stderr, APP_NAME " v" APP_VERSION "\n");
