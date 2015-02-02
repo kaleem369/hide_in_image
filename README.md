@@ -1,9 +1,9 @@
 # hide_in_image
-Encode data into an image, and output as a PNG file.
+Encode data into an image using [LSB-Steganography](http://en.wikipedia.org/wiki/Steganography_tools), and output as a PNG file.
 ```
 Usage: hii [OPTION]... [FILE] [-m MSGFILE | -t MSGTEXT] [-o OUTFILE]
        hii -x [OPTION]... [FILE] [-m MSGFILE]
-Encode data into an image, and output as a PNG file.
+Encode data into an image using LSB-Steganography, and output as a PNG file.
 
 Available options are:
     -o, --outfile OUTFILE    write output to OUTFILE.

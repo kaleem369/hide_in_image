@@ -91,7 +91,7 @@ void usage(char opt, const char *self)
     fprintf(stderr,
             "Usage: %s [OPTION]... [FILE] [-m MSGFILE | -t MSGTEXT] [-o OUTFILE]\n"
             "       %s -x [OPTION]... [FILE] [-m MSGFILE]\n"
-            "Encode data into an image, and output as a PNG file.\n"
+            "Encode data into an image using LSB-Steganography, and output as a PNG file.\n"
             "\n"
             "Available options are:\n"
             "    -o, --outfile OUTFILE    write output to OUTFILE.\n"
