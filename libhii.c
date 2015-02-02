@@ -1,3 +1,8 @@
+/*
+ * encode data in the least significant bits of pixel
+ *
+ * functions return false on fail
+ */
 
 #include "libhii.h"
 
@@ -7,7 +12,12 @@
 #include "stb_image_write.h"
 #include "stb_image.h"
 
+#include "opnglib/opnglib.h"
+
+#include <stdio.h>
+#include <stdlib.h>
 #include <stdbool.h>
+#include <string.h>
 #include <assert.h>
 
 // todo: ignore alpha
@@ -19,7 +29,7 @@ typedef struct
 } bitptr;
 
 // todo: optimize by using int16_t (endian?)
-unsigned char bit_read(bitptr *ptr, int nbit)
+static unsigned char bit_read(bitptr *ptr, int nbit)
 {
     assert(nbit > 0);
     assert(nbit < 8);
@@ -53,24 +63,26 @@ unsigned char bit_read(bitptr *ptr, int nbit)
     return ret;
 }
 
-//// big endian
-//unsigned char bit_read_o(bitptr *ptr, int nbit)
-//{
-//    assert(nbit > 0);
-//    assert(nbit < 8);
-//
-//    uint32_t u32 = *((uint32_t *)ptr->byte);
-//    u32 <<= ptr->bit;
-//    u32 >>= 32 - nbit;
-//
-//    ptr->bit += nbit;
-//    ptr->byte += ptr->bit / 8;
-//    ptr->bit %= 8;
-//
-//    return (unsigned char)u32;
-//}
+#if 0
+// not working
+unsigned char bit_read_o(bitptr *ptr, int nbit)
+{
+    assert(nbit > 0);
+    assert(nbit < 8);
 
-void bit_write(bitptr *ptr, unsigned char bits, int nbit)
+    uint16_t u16 = (uint16_t)ptr->byte[1] + ((uint16_t)ptr->byte[0] << 8);
+    u16 <<= ptr->bit;
+    u16 >>= 16 - nbit;
+
+    ptr->bit += nbit;
+    ptr->byte += ptr->bit / 8;
+    ptr->bit %= 8;
+
+    return (unsigned char)u16;
+}
+#endif // 0
+
+static void bit_write(bitptr *ptr, unsigned char bits, int nbit)
 {
     assert(nbit > 0);
     assert(nbit < 8);
@@ -113,32 +125,35 @@ void bit_write(bitptr *ptr, unsigned char bits, int nbit)
     }
 }
 
-//// big endian
-//void bit_write_o(bitptr *ptr, unsigned char bits, int nbit)
-//{
-//    assert(nbit > 0);
-//    assert(nbit < 8);
-//
-//    uint32_t u32 = *((uint32_t *)ptr->byte);
-//    uint32_t mask = 0xffffffff;
-//    mask <<= ptr->bit;
-//    mask >>= ptr->bit;
-//    mask >>= 32 - ptr->bit - nbit;
-//    mask <<= 32 - ptr->bit - nbit;
-//    mask = ~mask;
-//    u32 &= mask;
-//    uint32_t add = (uint32_t)bits << (32 - ptr->bit - nbit);
-//    u32 |= add;
-//
-//    *((uint32_t *)ptr->byte) = u32;
-//
-//    ptr->bit += nbit;
-//    ptr->byte += ptr->bit / 8;
-//    ptr->bit %= 8;
-//}
+#if 0
+// not working
+void bit_write_o(bitptr *ptr, unsigned char bits, int nbit)
+{
+    assert(nbit > 0);
+    assert(nbit < 8);
 
-//#define bit_read bit_read_o
-//#define bit_write bit_write_o
+    uint16_t u16 = (uint16_t)ptr->byte[1] + ((uint16_t)ptr->byte[0] << 8);
+    uint32_t mask = 0xffff;
+    mask <<= ptr->bit;
+    mask >>= ptr->bit;
+    mask >>= 16 - ptr->bit - nbit;
+    mask <<= 16 - ptr->bit - nbit;
+    mask = ~mask;
+    u16 &= mask;
+    uint16_t add = (uint16_t)bits << (16 - ptr->bit - nbit);
+    u16 |= add;
+
+    ptr->byte[0] = u16 >> 8;
+    ptr->byte[1] = u16 & 0x00ff;
+
+    ptr->bit += nbit;
+    ptr->byte += ptr->bit / 8;
+    ptr->bit %= 8;
+}
+
+#define bit_read bit_read_o
+#define bit_write bit_write_o
+#endif // 0
 
 unsigned char subpixel_apply_bits(unsigned char subpixel, unsigned char bits, int nbit)
 {
@@ -328,4 +343,168 @@ bool image_extract_data(image *img, unsigned char *buf, int buf_len)
 
     return true;
 }
+
+bool image_file_extract_data(const char *filename, unsigned char *buf, int buf_len)
+{
+    image img_st;
+    image *img = &img_st;
+
+    bool status = image_load_file(filename, img);
+    if(!status)
+        return false;
+
+    image_stream_info info;
+    status = image_get_stream_info(img, &info);
+    if(!status || info.len > buf_len)
+    {
+        image_free(img);
+        return false;
+    }
+
+    status = image_extract_data(img, buf, buf_len);
+    image_free(img);
+    return status;
+}
+
+bool image_file_extract_data_to_file(const char *img_file_name, const char *out_file_name)
+{
+    image img_st;
+    image *img = &img_st;
+
+    bool status = image_load_file(img_file_name, img);
+    if(!status)
+        return false;
+
+    image_stream_info info;
+    status = image_get_stream_info(img, &info);
+    if(!status)
+    {
+        image_free(img);
+        return false;
+    }
+
+    unsigned char *buf = malloc(info.len);
+    assert(buf);
+
+    status = image_extract_data(img, buf, info.len);
+    image_free(img);
+    if(!status)
+    {
+        free(buf);
+        return false;
+    }
+
+    FILE *outfile = fopen(out_file_name, "wb+");
+    if(!outfile)
+    {
+        free(buf);
+        return false;
+    }
+
+    int n = fwrite(buf, 1, info.len, outfile);
+    if(n != info.len)
+        status = false;
+
+    fclose(outfile);
+    return status;
+}
+
+bool image_file_apply_data(
+    const char *in_file_name, const char *out_file_name,    /* can be NULL */
+    unsigned char *buf, int buf_len,
+    int bit_per_byte /* set to 0 for automatic detecting suitable value */ )
+{
+    assert(bit_per_byte < 8 && bit_per_byte >= 0);
+
+    image img_st;
+    image *img = &img_st;
+
+    bool status = image_load_file(in_file_name, img);
+    if(!status)
+        return false;
+
+    if(bit_per_byte == 0)
+    {
+        for(int i = 1; i < 8; i++)
+        {
+            int cap = image_capacity(img, i);
+            if(cap >= buf_len)
+            {
+                bit_per_byte = i;
+                break;
+            }
+        }
+        if(bit_per_byte == 0)
+        {
+            image_free(img);
+            return false;
+        }
+    }
+
+    status = image_apply_data(img, buf, buf_len, bit_per_byte);
+    if(!status)
+    {
+        image_free(img);
+        return false;
+    }
+
+    if(!out_file_name)
+        out_file_name = in_file_name;
+
+    status = image_save_file(out_file_name, img);
+    image_free(img);
+
+    return status;
+}
+
+#if 1
+bool image_optimize_pngfile(const char *pngfile, int level, int verbose)
+{
+    opng_set_logging_name("hii");
+    if(verbose)
+    {
+        opng_set_logging_level(OPNG_MSG_INFO);
+        opng_set_logging_format(OPNG_MSGFMT_FANCY);
+    }
+    else
+    {
+        opng_set_logging_level(OPNG_MSG_WARNING);
+        opng_set_logging_format(OPNG_MSGFMT_UNIX);
+    }
+
+    opng_optimizer_t *the_optimizer = opng_create_optimizer();
+    if (the_optimizer == NULL)
+    {
+        opng_destroy_optimizer(the_optimizer);
+        return false;
+    }
+
+    struct opng_options options;
+    memset(&options, 0, sizeof(options));
+    options.interlace = -1;
+    options.optim_level = level;
+//    options.verbose = 1;
+//    options.out = 1;
+    if (opng_set_options(the_optimizer, &options) < 0)
+    {
+        opng_destroy_optimizer(the_optimizer);
+        return false;
+    }
+
+    opng_transformer_t *the_transformer = opng_create_transformer();
+    if (the_transformer == NULL)
+    {
+        opng_destroy_transformer(the_transformer);
+        opng_destroy_optimizer(the_optimizer);
+        return false;
+    }
+    opng_set_transformer(the_optimizer, the_transformer);
+
+    int ret = opng_optimize_file(the_optimizer, pngfile, pngfile, NULL);
+
+    opng_destroy_optimizer(the_optimizer);
+    opng_destroy_transformer(the_transformer);
+    return !ret;
+}
+#endif // 0
 
