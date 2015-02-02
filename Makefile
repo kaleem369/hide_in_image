@@ -3,11 +3,11 @@ COMPILER_PREFIX=
 
 #CC=gcc
 CC=$(COMPILER_PREFIX)gcc
-CFLAGS=-O2 -std=c99 -Wall -flto
+CFLAGS=-O2 -std=c99 -Wall
 #CFLAGS += -DNDEBUG
 #LD=g++
 LD=$(COMPILER_PREFIX)g++
-LDFLAGS=-O2 -Wall -flto
+LDFLAGS=-O2 -Wall
 AR=$(COMPILER_PREFIX)ar
 RANLIB=$(COMPILER_PREFIX)ranlib
 
@@ -29,7 +29,7 @@ hii: main.o libhii.a \
   optipng/src/zlib/libz.a \
   optipng/src/opngreduc/libopngreduc.a \
   optipng/src/opnglib/libopng.a
-	$(LD) $(LDFLAGS) main.o -o hii -flto -s -L. -lhii $(LIBDIR) $(LIBS)
+	$(LD) $(LDFLAGS) main.o -o hii -s -L. -lhii $(LIBDIR) $(LIBS)
 
 main.o: main.c libhii.h
 	$(CC) $(CFLAGS) -c main.c
