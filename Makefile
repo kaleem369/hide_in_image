@@ -1,3 +1,6 @@
+# fixme: fail to build with make -j4
+
+# cross build
 COMPILER_PREFIX=
 #COMPILER_PREFIX=i686-w64-mingw32-
 
@@ -29,7 +32,7 @@ hii: main.o libhii.a \
   optipng/src/zlib/libz.a \
   optipng/src/opngreduc/libopngreduc.a \
   optipng/src/opnglib/libopng.a
-	$(LD) $(LDFLAGS) main.o -o hii -s -L. -lhii $(LIBDIR) $(LIBS)
+	$(LD) $(LDFLAGS) -static-libgcc -s main.o -o hii -L. -lhii $(LIBDIR) $(LIBS)
 
 main.o: main.c libhii.h
 	$(CC) $(CFLAGS) -c main.c
