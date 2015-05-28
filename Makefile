@@ -75,4 +75,8 @@ clean:
 install:
 	@echo use the ./hii binary.
 
-.PHONY: all clean install
+update-stb:
+	wget -O stb_image.h https://raw.githubusercontent.com/nothings/stb/master/stb_image.h
+	wget -O stb_image_write.h https://raw.githubusercontent.com/nothings/stb/master/stb_image_write.h
+
+.PHONY: all clean install update-stb
