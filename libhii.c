@@ -460,6 +460,10 @@ bool image_file_apply_data(
 #if 1
 bool image_optimize_pngfile(const char *pngfile, int level, int verbose)
 {
+#if _NO_OPTPNG
+    fprintf(stderr, "OptPNG not available.\n");
+    return false;
+#else
     opng_set_logging_name("hii");
     if(verbose)
     {
@@ -505,6 +509,7 @@ bool image_optimize_pngfile(const char *pngfile, int level, int verbose)
     opng_destroy_optimizer(the_optimizer);
     opng_destroy_transformer(the_transformer);
     return !ret;
+#endif
 }
 #endif // 0
 

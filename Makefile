@@ -4,10 +4,18 @@
 COMPILER_PREFIX=
 #COMPILER_PREFIX=i686-w64-mingw32-
 
+# do not enable optpng
+#no_optpng=1
+
 #CC=gcc
 CC=$(COMPILER_PREFIX)gcc
+
 CFLAGS=-O2 -std=c99 -Wall
 #CFLAGS += -DNDEBUG
+ifdef no_optpng
+    CFLAGS += -D_NO_OPTPNG=1
+endif
+
 #LD=g++
 LD=$(COMPILER_PREFIX)g++
 LDFLAGS=-O2 -Wall
@@ -17,22 +25,28 @@ RANLIB=$(COMPILER_PREFIX)ranlib
 # is ar, ranlib platform specific? yes.
 My_make_flags=CC=$(CC) LD=$(LD) AR=$(AR) RANLIB=$(RANLIB)
 
-LIBDIR=-L optipng/src/opnglib/ -L optipng/src/libpng/ -L optipng/src/zlib/ -L optipng/src/pngxtern/ -L optipng/src/minitiff/ -L optipng/src/gifread/ -L optipng/src/pnmio/ -L optipng/src/opngreduc/
-LIBS=-lopng -lpng -lz -lpngxtern -lminitiff -lgifread -lpnmio -lopngreduc
+ifdef no_optpng
+    OPNG_LIB=
+    OPNG_LIBDIR=
+    OPNG_LINK=
+else
+    OPNG_LIB=optipng/src/pngxtern/libpngxtern.a \
+      optipng/src/minitiff/libminitiff.a \
+      optipng/src/pnmio/libpnmio.a \
+      optipng/src/gifread/libgifread.a \
+      optipng/src/libpng/libpng.a \
+      optipng/src/zlib/libz.a \
+      optipng/src/opngreduc/libopngreduc.a \
+      optipng/src/opnglib/libopng.a
+    OPNG_LIBDIR=-L optipng/src/opnglib/ -L optipng/src/libpng/ -L optipng/src/zlib/ -L optipng/src/pngxtern/ -L optipng/src/minitiff/ -L optipng/src/gifread/ -L optipng/src/pnmio/ -L optipng/src/opngreduc/
+    OPNG_LINK=-lopng -lpng -lz -lpngxtern -lminitiff -lgifread -lpnmio -lopngreduc
+endif
 
 
 all: hii
 
-hii: main.o libhii.a \
-  optipng/src/pngxtern/libpngxtern.a \
-  optipng/src/minitiff/libminitiff.a \
-  optipng/src/pnmio/libpnmio.a \
-  optipng/src/gifread/libgifread.a \
-  optipng/src/libpng/libpng.a \
-  optipng/src/zlib/libz.a \
-  optipng/src/opngreduc/libopngreduc.a \
-  optipng/src/opnglib/libopng.a
-	$(LD) $(LDFLAGS) -static-libgcc -s main.o -o hii -L. -lhii $(LIBDIR) $(LIBS)
+hii: main.o libhii.a $(OPNG_LIB)
+	$(LD) $(LDFLAGS) -static-libgcc -s main.o -o hii -L. -lhii $(OPNG_LIBDIR) $(OPNG_LINK)
 
 main.o: main.c libhii.h
 	$(CC) $(CFLAGS) -c main.c
@@ -58,13 +72,6 @@ optipng/src/libpng/pnglibconf.h:
 	cd optipng/src/libpng/ && \
 	cp scripts/pnglibconf.h.prebuilt pnglibconf.h && \
 	cd ../../..
-
-# fixme: -fPIC
-libhii.so: libhii.o
-	$(LD) $(LDFLAGS) -shared -fPIC -o libhii.so libhii.o $(LIBDIR) $(LIBS)
-
-libhii.dll: libhii.o
-	$(LD) $(LDFLAGS) -shared -fPIC -o libhii.dll libhii.o $(LIBDIR) $(LIBS)
 
 clean:
 	-rm *.o *.a hii

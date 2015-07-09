@@ -91,7 +91,9 @@ void usage(char opt, const char *self)
     fprintf(stderr,
             "Usage: %s [OPTION]... [FILE] [-m MSGFILE | -t MSGTEXT] [-o OUTFILE]\n"
             "       %s -x [OPTION]... [FILE] [-m MSGFILE]\n"
-            "Encode data into an image using LSB-Steganography, and output as a PNG file.\n"
+            "       %s -s [OPTION]... [FILE]\n"
+            "Encode data into an image using LSB-Steganography, and output as a PNG image.\n"
+            "Input image supports JPEG, PNG, BMP, PSD, TGA, GIF, HDR, PIC, PNM format.\n"
             "\n"
             "Available options are:\n"
             "    -o, --outfile OUTFILE    write output to OUTFILE.\n"
@@ -102,21 +104,32 @@ void usage(char opt, const char *self)
             "    -v, --verbose            verbose mode.\n"
             "    -q, --quiet              suppress error messages.\n"
             "    -s, --show-info          show some info about FILE, can be combined with -x.\n"
+            #if _NO_OPTPNG
+            "    -O 0-9, --optimize       optimize png file for size. (not available)\n"
+            #else
             "    -O 0-9, --optimize       optimize png file for size.\n"
+            #endif
             "    -h, -?, --help           give this help.\n"
             "    -V, --version            show version.\n"
             "\n"
             "Default MSGFILE is \"-\" (stdin or stdout).\n"
             "\n"
             "Examples:\n"
+            "    # encode msg.txt into g.png, write output to g.out.png\n"
             "    hii g.png -m msg.txt -o g.out.png\n"
+            "    # extract message to stdout from g.out.png\n"
             "    hii -x g.out.png\n"
-            "    hii -sx g.out.png\n"
+            "    # show some information about g.out.png\n"
+            "    hii -s g.out.png\n"
             "\n"
-            "    hii g.png -t abcdefg -o g.out.png\n"
-            "    hii -x g.png\n"
+            "    # encode 'abcdefg' into g.png\n"
+            "    hii g.png -t 'abcdefg' -o g.out.png\n"
+            "    hii -x g.out.png\n"
+            "\n"
+            "Reference:\n"
+            "    http://en.wikipedia.org/wiki/Steganography_tools\n"
             "\n",
-            self, self);
+            self, self, self);
     fprintf(stderr, APP_NAME " v" APP_VERSION "\n");
 }
 

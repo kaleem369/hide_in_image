@@ -3,7 +3,9 @@ Encode data into an image using [LSB-Steganography](http://en.wikipedia.org/wiki
 ```
 Usage: hii [OPTION]... [FILE] [-m MSGFILE | -t MSGTEXT] [-o OUTFILE]
        hii -x [OPTION]... [FILE] [-m MSGFILE]
-Encode data into an image using LSB-Steganography, and output as a PNG file.
+       hii -s [OPTION]... [FILE]
+Encode data into an image using LSB-Steganography, and output as a PNG image.
+Input image supports JPEG, PNG, BMP, PSD, TGA, GIF, HDR, PIC, PNM format.
 
 Available options are:
     -o, --outfile OUTFILE    write output to OUTFILE.
@@ -21,11 +23,18 @@ Available options are:
 Default MSGFILE is "-" (stdin or stdout).
 
 Examples:
-        hii g.png -m msg.txt -o g.out.png
-        hii -x g.out.png
-        hii -sx g.out.png
+    # encode msg.txt into g.png, write output to g.out.png
+    hii g.png -m msg.txt -o g.out.png
+    # extract message to stdout from g.out.png
+    hii -x g.out.png
+    # show some information about g.out.png
+    hii -s g.out.png
 
-        hii g.png -t abcdefg -o g.out.png
-        hii -x g.png
+    # encode 'abcdefg' into g.png
+    hii g.png -t 'abcdefg' -o g.out.png
+    hii -x g.out.png
+
+Reference:
+    http://en.wikipedia.org/wiki/Steganography_tools
 ```
 hii v0.1
