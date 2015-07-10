@@ -12,7 +12,9 @@
 #include "stb_image_write.h"
 #include "stb_image.h"
 
+#if ! _NO_OPTPNG
 #include "opnglib/opnglib.h"
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -20,7 +22,7 @@
 #include <string.h>
 #include <assert.h>
 
-// todo: ignore alpha
+// todo: ignore alpha channel
 
 typedef struct
 {
