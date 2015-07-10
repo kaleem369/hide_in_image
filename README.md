@@ -38,3 +38,10 @@ Reference:
     http://en.wikipedia.org/wiki/Steganography_tools
 ```
 hii v0.1
+
+# install
+`make`
+
+or
+
+`make no_optpng=1`
